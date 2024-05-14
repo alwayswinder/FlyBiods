@@ -49,7 +49,7 @@ void AMyBoid::UpdateBird(bool UseComputeShader)
 {
 	CurAcceleration = FVector(0, 0, 0);
 
-	//¾ÛºÏ£¬Í¬ĞĞ£¬±ÜÈÃ
+	//èšåˆï¼ŒåŒè¡Œï¼Œé¿è®©
 	if (FindOther)
 	{
 		if (!UseComputeShader)
