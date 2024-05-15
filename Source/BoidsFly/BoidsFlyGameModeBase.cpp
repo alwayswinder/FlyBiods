@@ -15,6 +15,7 @@ ABoidsFlyGameModeBase::ABoidsFlyGameModeBase()
 void ABoidsFlyGameModeBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	MaxNearNum--;
 	if (UseGPU)
 	{
 		ComputeBoid();

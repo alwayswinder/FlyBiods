@@ -32,6 +32,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	int BirdId = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
+	int32 MinGroupNum = 3;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	float SpeedMin = 0.5;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	float SpeedMax = 0.7;
@@ -52,17 +54,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	float leaveWallWeight = 0.5;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
-	float TestBoxSize = 1000;
+	float MaxActiveAreaSize = 5000.0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	float LeaveTime = 0.5;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Setting")
 	FVector GoalDirection;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
+	UPROPERTY(BlueprintReadWrite, Category = "Setting")
 	FVector SpawnLocation;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
-	bool FindOther = true;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
-	FVector DebugVector;
+	
 	UFUNCTION(BlueprintCallable, Category = "Setting")
 	void AddSelfToManage();
 private:

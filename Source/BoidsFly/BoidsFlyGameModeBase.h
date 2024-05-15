@@ -25,5 +25,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ClearBoidBase();
 
-	FCriticalSection RenderEveryFrameLock;
+	
+	int32 MaxNearNum = 0;
+	FVector FlowTarget;
 };
