@@ -49,7 +49,7 @@ public:
 	FMyBoidAttribute BoidInfoSave;
 	
 private:
-	FStructuredBufferRHIRef BoidBaseBuffer;
+	FBufferRHIRef BoidBaseBuffer;
 	FUnorderedAccessViewRHIRef BoidBaseRecordsUAV;
 };
 

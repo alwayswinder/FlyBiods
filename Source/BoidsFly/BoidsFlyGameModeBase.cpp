@@ -57,7 +57,7 @@ void ABoidsFlyGameModeBase::ComputeBoid()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Boid Num Error!!!!!!Numtotal=%d, BoidNum=%d, BoidBaseNum=%d"), AllBoid.Num(), FMyBoidModule::Get().BoidInfoSave.BoidBase.Num());
+		UE_LOG(LogTemp, Warning, TEXT("Boid Num Error!!!!!!AllBoidNum=%d, BoidBaseNum=%d"), AllBoid.Num(), FMyBoidModule::Get().BoidInfoSave.BoidBase.Num());
 	}
 	
 	for (int i = 0; i < AllBoid.Num(); i++)

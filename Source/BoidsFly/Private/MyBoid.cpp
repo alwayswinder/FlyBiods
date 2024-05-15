@@ -52,107 +52,112 @@ void AMyBoid::UpdateBird(bool UseComputeShader)
 	//聚合，同行，避让
 	if (FindOther)
 	{
-		if (!UseComputeShader)
+		if (GetRaysVectors())
 		{
-			TArray<AMyBoid*> NearBoids;
-
-			TArray<FHitResult> Hits;
-			UKismetSystemLibrary::SphereTraceMultiForObjects(this, GetActorLocation(), GetActorLocation(), ViewRadius,
-				ObjectTypesBird, false, IgnoryActors, EDrawDebugTrace::None, Hits, true);
-
-			for (FHitResult hit : Hits)
+			for (FVector RayVector : RaysVectors)
 			{
-				if (hit.bBlockingHit)
+				FHitResult Hit;
+				FVector End = GetActorLocation() + RayVector * ViewRadius;
+				UKismetSystemLibrary::SphereTraceSingleForObjects(this, GetActorLocation(), End, 5.0f,
+					ObjectTypesWall, false, IgnoryActors, EDrawDebugTrace::None, Hit, true, FLinearColor::Green, FLinearColor::Red, 0.2f);
+				if (!Hit.bBlockingHit)
 				{
-					AMyBoid* Bird = Cast<AMyBoid>(hit.Actor);
-					if (Bird && !Bird->GetIsCollosion())
-					{
-						NearBoids.Add(Bird);
-					}
+					CurAcceleration += RayVector * CollosionWeight;
+					IsCollision = true;
+					GetWorldTimerManager().SetTimer(CollisionTimer, this, &AMyBoid::SetIsCollosionFalse, LeaveTime, false, LeaveTime);
+					//UE_LOG(LogTemp, Warning, TEXT("MeetCollosion"));
+					break;
 				}
 			}
-			if (NearBoids.Num() > 0 && !IsCollision)
+		}
+
+		if (IsCollision)
+		{
+			FHitResult Hit;
+			UKismetSystemLibrary::SphereTraceSingleForObjects(this, GetActorLocation(),
+				GetActorLocation()+FVector(0,0,1), AovRadius,
+				ObjectTypesWall, false, IgnoryActors, EDrawDebugTrace::None, Hit, true);
+			if (Hit.bBlockingHit)
 			{
-				FVector Center = FVector(0, 0, 0);
-				Aov = Aov * FreeWeight;
-				FVector Flow = FVector(0, 0, 0);
-				int BoidNum = 0;
-
-				for (AMyBoid* Bird : NearBoids)
-				{
-					FVector OffsetVector = Bird->GetActorLocation() - GetActorLocation();
-					float Distence = OffsetVector.Size();
-
-					if (Distence <= ViewRadius)
-					{
-						Center += Bird->GetActorLocation();
-						Flow += Bird->GetCurVelocity();
-						BoidNum++;
-
-						if (Distence <= AovRadius)
-						{
-							Aov -= OffsetVector / (Distence * Distence);
-						}
-					}
-				}
-				if (BoidNum > 0)
-				{
-					CurAcceleration += (Center / BoidNum - GetActorLocation()) * CenterWeight;
-					DebugVector = Center / BoidNum;
-					CurAcceleration += (Flow + GoalDirection) / (float)BoidNum * FlowWeight;
-				}
-				CurAcceleration += Aov * AovWeight;
-				//CurAcceleration = CurAcceleration.GetSafeNormal(0.0001f) * FMath::Clamp(CurAcceleration.Size(), 0.0f, 1.0f);
-				//UE_LOG(LogTemp, Warning, TEXT("NearBoids"));
+				FVector OffSetCollosion = GetActorLocation() - Hit.ImpactPoint;
+				CurAcceleration += OffSetCollosion * leaveWallWeight / (OffSetCollosion.Size() * OffSetCollosion.Size());
+				UE_LOG(LogTemp, Warning, TEXT("leaveWall"));
 			}
 		}
 		else
 		{
-			int BoidNearNum = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].BoidNearNum;
-			FVector Center = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].Center;
-			FVector Flow = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].Flow;
-			FVector AovOut = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].AovOut;
-			if (BoidNearNum > 0 && !IsCollision)
+			if (!UseComputeShader)
 			{
-				Aov = Aov * FreeWeight - AovOut;
-				CurAcceleration += (Center / BoidNearNum - GetActorLocation()) * CenterWeight;
-				DebugVector = Center / BoidNearNum;
-				CurAcceleration += (Flow + GoalDirection) / (float)BoidNearNum * FlowWeight;
-				CurAcceleration += Aov * AovWeight;
+			
+				TArray<AMyBoid*> NearBoids;
+
+				TArray<FHitResult> Hits;
+				UKismetSystemLibrary::SphereTraceMultiForObjects(this, GetActorLocation(),
+					GetActorLocation()+FVector(0,0,1), ViewRadius,
+					ObjectTypesBird, false, IgnoryActors, EDrawDebugTrace::None, Hits, true);
+
+				for (FHitResult hit : Hits)
+				{
+					if (hit.bBlockingHit)
+					{
+						AMyBoid* Bird = Cast<AMyBoid>(hit.GetActor());
+						if (Bird && !Bird->GetIsCollosion())
+						{
+							NearBoids.Add(Bird);
+						}
+					}
+				}
+				if (NearBoids.Num() > 0 && !IsCollision)
+				{
+					FVector Center = FVector(0, 0, 0);
+					Aov = Aov * FreeWeight;
+					FVector Flow = FVector(0, 0, 0);
+					int BoidNum = 0;
+
+					for (AMyBoid* Bird : NearBoids)
+					{
+						FVector OffsetVector = Bird->GetActorLocation() - GetActorLocation();
+						float Distence = OffsetVector.Size();
+
+						if (Distence <= ViewRadius)
+						{
+							Center += Bird->GetActorLocation();
+							Flow += Bird->GetCurVelocity();
+							BoidNum++;
+
+							if (Distence <= AovRadius)
+							{
+								Aov -= OffsetVector / (Distence * Distence);
+							}
+						}
+					}
+					if (BoidNum > 0)
+					{
+						CurAcceleration += (Center / BoidNum - GetActorLocation()) * CenterWeight;
+						DebugVector = Center / BoidNum;
+						CurAcceleration += (Flow + GoalDirection) / (float)BoidNum * FlowWeight;
+					}
+					CurAcceleration += Aov * AovWeight;
+					//CurAcceleration = CurAcceleration.GetSafeNormal(0.0001f) * FMath::Clamp(CurAcceleration.Size(), 0.0f, 1.0f);
+					//UE_LOG(LogTemp, Warning, TEXT("NearBoids"));
+				}
+			}
+			else
+			{
+				int BoidNearNum = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].BoidNearNum;
+				FVector Center = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].Center;
+				FVector Flow = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].Flow;
+				FVector AovOut = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].AovOut;
+				if (BoidNearNum > 0 && !IsCollision)
+				{
+					Aov = Aov * FreeWeight - AovOut;
+					CurAcceleration += (Center / BoidNearNum - GetActorLocation()) * CenterWeight;
+					DebugVector = Center / BoidNearNum;
+					CurAcceleration += (Flow + GoalDirection) / (float)BoidNearNum * FlowWeight;
+					CurAcceleration += Aov * AovWeight;
+				}
 			}
 		}
-	}
-
-	if (GetRaysVectors())
-	{
-		for (FVector RayVector : RaysVectors)
-		{
-			FHitResult Hit;
-			FVector End = GetActorLocation() + RayVector * ViewRadius;
-			UKismetSystemLibrary::SphereTraceSingleForObjects(this, GetActorLocation(), End, 5.0f,
-				ObjectTypesWall, false, IgnoryActors, EDrawDebugTrace::None, Hit, true, FLinearColor::Green, FLinearColor::Red, 0.2f);
-			if (!Hit.bBlockingHit)
-			{
-				CurAcceleration += RayVector * CollosionWeight;
-				IsCollision = true;
-				GetWorldTimerManager().SetTimer(CollisionTimer, this, &AMyBoid::SetIsCollosionFalse, LeaveTime, false, LeaveTime);
-				//UE_LOG(LogTemp, Warning, TEXT("MeetCollosion"));
-				break;
-			}
-		}
-	}
-
-	if (IsCollision)
-	{
-		FHitResult Hit;
-		UKismetSystemLibrary::SphereTraceSingleForObjects(this, GetActorLocation(), GetActorLocation(), AovRadius,
-			ObjectTypesWall, false, IgnoryActors, EDrawDebugTrace::None, Hit, true);
-		if (Hit.bBlockingHit)
-		{
-			FVector OffSetCollosion = GetActorLocation() - Hit.ImpactPoint;
-			CurAcceleration += OffSetCollosion * leaveWallWeight / (OffSetCollosion.Size() * OffSetCollosion.Size());
-		}
-		//UE_LOG(LogTemp, Warning, TEXT("leaveWall"));
 	}
 
 	CurAcceleration = CurAcceleration.GetSafeNormal(0.0001f) * FMath::Clamp(CurAcceleration.Size(), 0.0f, 1.0f);

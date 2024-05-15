@@ -7,7 +7,7 @@
 #include "ShaderParameterStruct.h"
 #include "RHIUtilities.h"
 #include "RenderGraphUtils.h"
-
+#include "DataDrivenShaderPlatformInfo.h"
 
 IMPLEMENT_PRIMARY_GAME_MODULE(FMyBoidModule, BoidsFly, "BoidsFly");
 
@@ -49,9 +49,10 @@ void FMyBoidModule::RunComputeShader(FRHICommandListImmediate& RHICmdList)
 
 	//BoidInputBuffer.Initialize(sizeof(FMyBoidInput), 10, PF_Unknown, BUF_UnorderedAccess | BUF_SourceCopy, TEXT("BoidInputBuffer"), &InitialInputParams);
 	
-	FRHIResourceCreateInfo CreateInfoBoidBase(&InitialBoidBaseParams);
-	BoidBaseBuffer = RHICreateStructuredBuffer(sizeof(FMyBoidBase), sizeof(FMyBoidBase) * BoidInfoSave.BoidBase.Num(), BUF_UnorderedAccess | BUF_ShaderResource, CreateInfoBoidBase);
-	BoidBaseRecordsUAV = RHICreateUnorderedAccessView(BoidBaseBuffer, false, false);
+	FRHIResourceCreateInfo CreateInfoBoidBase(TEXT("BoidCompute"), &InitialBoidBaseParams);
+
+	BoidBaseBuffer = RHICmdList.CreateStructuredBuffer(sizeof(FMyBoidBase), sizeof(FMyBoidBase) * BoidInfoSave.BoidBase.Num(), BUF_UnorderedAccess | BUF_ShaderResource, CreateInfoBoidBase);
+	BoidBaseRecordsUAV = RHICmdList.CreateUnorderedAccessView(BoidBaseBuffer, false, false);
 
 	QUICK_SCOPE_CYCLE_COUNTER(STAT_BoidFly_ComputeShader); // Used to gather CPU profiling data for the UE4 session frontend
 
@@ -69,12 +70,12 @@ void FMyBoidModule::RunComputeShader(FRHICommandListImmediate& RHICmdList)
 
 void FMyBoidModule::GetComputeShaderResult(FRHICommandListImmediate& RHICmdList)
 {
-	FMyBoidBase* Buffer = (FMyBoidBase*)RHICmdList.LockStructuredBuffer(BoidBaseBuffer, 0, sizeof(FMyBoidBase) * BoidInfoSave.BoidBase.Num(), EResourceLockMode::RLM_ReadOnly);
+	FMyBoidBase* Buffer = (FMyBoidBase*)RHICmdList.LockBuffer(BoidBaseBuffer, 0, sizeof(FMyBoidBase) * BoidInfoSave.BoidBase.Num(), EResourceLockMode::RLM_ReadOnly);
 	for (int i = 0; i < BoidInfoSave.BoidBase.Num(); i++)
 	{
 		BoidInfoSave.BoidBase[i] = Buffer[i];
 	}
-	RHICmdList.UnlockStructuredBuffer(BoidBaseBuffer);
+	RHICmdList.UnlockBuffer(BoidBaseBuffer);
 }
 
 void FMyBoidModule::StartupModule()
