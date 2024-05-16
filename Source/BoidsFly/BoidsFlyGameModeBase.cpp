@@ -15,7 +15,6 @@ ABoidsFlyGameModeBase::ABoidsFlyGameModeBase()
 void ABoidsFlyGameModeBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	MaxNearNum--;
 	if (UseGPU)
 	{
 		ComputeBoid();
@@ -49,25 +48,13 @@ void ABoidsFlyGameModeBase::ComputeBoid()
 			[](FRHICommandListImmediate& RHICmdList) {
 			FMyBoidModule::Get().RunComputeShader(RHICmdList);
 		});
-		FlushRenderingCommands();
+	 	FlushRenderingCommands();
+		
 		ENQUEUE_RENDER_COMMAND(BoidResult)(
 			[](FRHICommandListImmediate& RHICmdList) {
 			FMyBoidModule::Get().GetComputeShaderResult(RHICmdList);
 		});
 		FlushRenderingCommands();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Boid Num Error!!!!!!AllBoidNum=%d, BoidBaseNum=%d"), AllBoid.Num(), FMyBoidModule::Get().BoidInfoSave.BoidBase.Num());
-	}
-	
-	for (int i = 0; i < AllBoid.Num(); i++)
-	{
-		AMyBoid* Bird = Cast<AMyBoid>(AllBoid[i]);
-		if (Bird)
-		{
-			Bird->UpdateBird(true);
-		}
 	}
 }
 

@@ -26,6 +26,9 @@ public:
 	void ClearBoidBase();
 
 	
-	int32 MaxNearNum = 0;
-	FVector FlowTarget;
+	int32 LastTickMaxNearNum = 0;
+	FVector LastTickTarget;
+
+	int32 CurrentTickMaxNearNum = 0;
+	FVector CurrentTickTarget;
 };
