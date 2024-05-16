@@ -6,6 +6,29 @@
 #include "Runtime/Engine/Classes/GameFramework/Actor.h"
 #include "MyBoidsManager.generated.h"
 
+
+struct FMyBoidBase
+{
+	FMyBoidBase(FVector Pos, FVector Vel) 
+	{
+		Position = Pos;
+		Velocity = Vel;
+	}
+	FVector Position = FVector(0, 0, 0);
+	FVector Velocity = FVector(0, 0, 0);
+	FVector Center = FVector(0, 0, 0);
+	FVector Flow = FVector(0, 0, 0);
+	FVector AovOut = FVector(0, 0, 0);
+	int BoidNearNum = 0;
+};
+
+struct FMyBoidAttribute
+{
+	TArray<FMyBoidBase> BoidBase;
+	float AovRadius = 20;
+	float ViewRadius = 100;
+};
+
 UCLASS()
 class BOIDSFLY_API AMyBoidsManager : public AActor
 {
@@ -22,4 +45,28 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	
+	void RunComputeShader(FRHICommandListImmediate& RHICmdList);
+	void GetComputeShaderResult(FRHICommandListImmediate& RHICmdList);
+
+	FMyBoidAttribute BoidInfoSave;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boid")
+	bool UseGPU = true;
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Boid")
+	FVector GlobalDirection;
+	
+	UFUNCTION(BlueprintCallable)
+	void ComputeBoid();
+	UFUNCTION(BlueprintCallable)
+	void InitBoidBase(int32 Num);
+	
+	int32 MaxGroupNum = 0;
+	FVector GroupTarget;
+
+
+private:private:
+	FBufferRHIRef BoidBaseBuffer;
+	FUnorderedAccessViewRHIRef BoidBaseRecordsUAV;
 };

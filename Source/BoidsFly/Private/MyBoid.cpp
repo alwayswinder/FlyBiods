@@ -2,10 +2,8 @@
 
 
 #include "MyBoid.h"
+#include "MyBoidsManager.h"
 #include "Kismet\KismetSystemLibrary.h"
-#include "../BoidsFly.h"
-#include "../BoidsFlyGameModeBase.h"
-#include "Kismet\GameplayStatics.h"
 
 
 // Sets default values
@@ -28,9 +26,10 @@ void AMyBoid::BeginPlay()
 void AMyBoid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	ABoidsFlyGameModeBase* Gm = Cast<ABoidsFlyGameModeBase>(UGameplayStatics::GetGameMode(this));
-
-	UpdateBird(false);
+	if(BoidsManager)
+	{
+		UpdateBird(BoidsManager->UseGPU);
+	}
 }
 
 FVector AMyBoid::GetCurVelocity()
@@ -130,16 +129,16 @@ void AMyBoid::UpdateBird(bool UseComputeShader)
 				}
 				if (BoidNum > 0)
 				{
-					// ABoidsFlyGameModeBase* Gm = Cast<ABoidsFlyGameModeBase>(UGameplayStatics::GetGameMode(this));
-					//
-					// if(BoidNum > Gm->CurrentTickMaxNearNum)
+					FVector GoalDirection = BoidsManager->GlobalDirection;
+					if(BoidNum > BoidsManager->MaxGroupNum)
+					{
+						BoidsManager->MaxGroupNum = BoidNum;
+						BoidsManager->GroupTarget = Center / BoidNum;
+					}
+					
+					// if(BoidsManager->MaxGroupNum - BoidNum >= MinGroupNum + 2)
 					// {
-					// 	Gm->CurrentTickMaxNearNum = BoidNum;
-					// 	Gm->CurrentTickTarget = Center / BoidNum;
-					// }
-					// else if(BoidNum <= MinGroupNum && Gm->CurrentTickMaxNearNum >= MinGroupNum + 2)
-					// {
-					// 	GoalDirection = Gm->CurrentTickTarget - GetActorLocation();
+					// 	GoalDirection = BoidsManager->GroupTarget - GetActorLocation();
 					// }
 					
 					CurAcceleration += (Center / BoidNum - GetActorLocation()) * CenterWeight;
@@ -147,30 +146,31 @@ void AMyBoid::UpdateBird(bool UseComputeShader)
 					CurAcceleration += Aov * AovWeight;
 				}
 			}
-			// else
-			// {
-			// 	ABoidsFlyGameModeBase* Gm = Cast<ABoidsFlyGameModeBase>(UGameplayStatics::GetGameMode(this));
-			// 	if(Gm->CurrentTickMaxNearNum >= MinGroupNum + 2)
-			// 	{
-			// 		CurAcceleration += Gm->CurrentTickTarget - GetActorLocation();
-			// 	}
-			// 	//DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(),Gm->FlowTarget, 2, FColor::Green, false, 1);
-			// }
+			else
+			{
+				if(BoidsManager->MaxGroupNum >= MinGroupNum + 5)
+				{
+					CurAcceleration += BoidsManager->GroupTarget - GetActorLocation();
+				}
+			}
 		}
 		else
 		{
-			if(FMyBoidModule::Get().BoidInfoSave.BoidBase.Contains(BirdId))
+			if(BoidsManager->BoidInfoSave.BoidBase.IsValidIndex(BirdId))
 			{
-				int BoidNearNum = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].BoidNearNum;
-				FVector Center = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].Center;
-				FVector Flow = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].Flow;
-				FVector AovOut = FMyBoidModule::Get().BoidInfoSave.BoidBase[BirdId].AovOut;
-				if (BoidNearNum > 0 && !IsCollision)
+				int BoidNearNum = BoidsManager->BoidInfoSave.BoidBase[BirdId].BoidNearNum;
+				if(BoidNearNum <= BoidsManager->BoidInfoSave.BoidBase.Num())
 				{
-					Aov = Aov * FreeWeight - AovOut;
-					CurAcceleration += (Center / BoidNearNum - GetActorLocation()) * CenterWeight;
-					CurAcceleration += (Flow + GoalDirection) / (float)BoidNearNum * FlowWeight;
-					CurAcceleration += Aov * AovWeight;
+					FVector Center = BoidsManager->BoidInfoSave.BoidBase[BirdId].Center;
+					FVector Flow = BoidsManager->BoidInfoSave.BoidBase[BirdId].Flow;
+					FVector AovOut = BoidsManager->BoidInfoSave.BoidBase[BirdId].AovOut;
+					if (BoidNearNum > 0 && !IsCollision)
+					{
+						Aov = Aov * FreeWeight - AovOut;
+						CurAcceleration += (Center / BoidNearNum - GetActorLocation()) * CenterWeight;
+						CurAcceleration += (Flow + BoidsManager->GlobalDirection) / (float)BoidNearNum * FlowWeight;
+						CurAcceleration += Aov * AovWeight;
+					}
 				}
 			}
 		}
@@ -182,11 +182,21 @@ void AMyBoid::UpdateBird(bool UseComputeShader)
 	NewLoc = ClampPos(NewLoc);
 	SetActorLocation(NewLoc, true);
 	SetActorRotation(FRotationMatrix::MakeFromX(CurVelocity.GetSafeNormal(0.0001f)).Rotator());
+	
+	if(UseComputeShader)
+	{
+		BoidsManager->BoidInfoSave.BoidBase[BirdId] = FMyBoidBase(GetActorLocation(), CurVelocity);
+	}
 }
 
-void AMyBoid::AddSelfToManage()
+void AMyBoid::AddSelfToManage(AMyBoidsManager* InBoidsManager)
 {
-	FMyBoidModule::Get().BoidInfoSave.BoidBase.Add(BirdId, FMyBoidBase(GetActorLocation(), CurVelocity));
+	if(InBoidsManager)
+	{
+		BoidsManager = InBoidsManager;
+		AddTickPrerequisiteActor(BoidsManager);
+		BoidsManager->BoidInfoSave.BoidBase[BirdId] = FMyBoidBase(GetActorLocation(), CurVelocity);
+	}
 }
 
 bool AMyBoid::GetRaysVectors()

@@ -7,7 +7,7 @@
 #include "MyBoid.generated.h"
 
 
-
+class AMyBoidsManager;
 
 UCLASS()
 class BOIDSFLY_API AMyBoid : public AActor
@@ -59,12 +59,14 @@ public:
 	float LeaveTime = 0.5;
 	
 	UPROPERTY(BlueprintReadWrite, Category = "Setting")
-	FVector GoalDirection;
-	UPROPERTY(BlueprintReadWrite, Category = "Setting")
 	FVector SpawnLocation;
 	
 	UFUNCTION(BlueprintCallable, Category = "Setting")
-	void AddSelfToManage();
+	void AddSelfToManage(AMyBoidsManager* InBoidsManager);
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Setting")
+	AMyBoidsManager* BoidsManager;
+
 private:
 	/*Value*/
 	FVector CurVelocity;
@@ -80,4 +82,5 @@ private:
 	bool GetRaysVectors();
 	void SetIsCollosionFalse();
 	FVector ClampPos(FVector Pos);
+
 };
