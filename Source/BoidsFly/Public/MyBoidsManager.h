@@ -7,6 +7,8 @@
 #include "MyBoidsManager.generated.h"
 
 
+class AMyBoid;
+
 struct FMyBoidBase
 {
 	FMyBoidBase(FVector Pos, FVector Vel) 
@@ -27,6 +29,7 @@ struct FMyBoidAttribute
 	TArray<FMyBoidBase> BoidBase;
 	float AovRadius = 20;
 	float ViewRadius = 100;
+	TArray<AMyBoid*> BoidRef;
 };
 
 UCLASS()

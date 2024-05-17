@@ -26,7 +26,7 @@ void AMyBoid::BeginPlay()
 void AMyBoid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if(BoidsManager)
+	if(BoidsManager && !BoidsManager->UseGPU)
 	{
 		UpdateBird(BoidsManager->UseGPU);
 	}
@@ -136,10 +136,10 @@ void AMyBoid::UpdateBird(bool UseComputeShader)
 						BoidsManager->GroupTarget = Center / BoidNum;
 					}
 					
-					// if(BoidsManager->MaxGroupNum - BoidNum >= MinGroupNum + 2)
-					// {
-					// 	GoalDirection = BoidsManager->GroupTarget - GetActorLocation();
-					// }
+					if(BoidNum <= MinGroupNum && BoidsManager->MaxGroupNum >= MinGroupNum + 5)
+					{
+						GoalDirection = BoidsManager->GroupTarget - GetActorLocation();
+					}
 					
 					CurAcceleration += (Center / BoidNum - GetActorLocation()) * CenterWeight;
 					CurAcceleration += (Flow + GoalDirection) / (float)BoidNum * FlowWeight;
@@ -182,11 +182,6 @@ void AMyBoid::UpdateBird(bool UseComputeShader)
 	NewLoc = ClampPos(NewLoc);
 	SetActorLocation(NewLoc, true);
 	SetActorRotation(FRotationMatrix::MakeFromX(CurVelocity.GetSafeNormal(0.0001f)).Rotator());
-	
-	if(UseComputeShader)
-	{
-		BoidsManager->BoidInfoSave.BoidBase[BirdId] = FMyBoidBase(GetActorLocation(), CurVelocity);
-	}
 }
 
 void AMyBoid::AddSelfToManage(AMyBoidsManager* InBoidsManager)
@@ -194,8 +189,10 @@ void AMyBoid::AddSelfToManage(AMyBoidsManager* InBoidsManager)
 	if(InBoidsManager)
 	{
 		BoidsManager = InBoidsManager;
-		AddTickPrerequisiteActor(BoidsManager);
+		BoidsManager->BoidInfoSave.AovRadius = AovRadius;
+		BoidsManager->BoidInfoSave.ViewRadius = ViewRadius;
 		BoidsManager->BoidInfoSave.BoidBase[BirdId] = FMyBoidBase(GetActorLocation(), CurVelocity);
+		BoidsManager->BoidInfoSave.BoidRef[BirdId] = this;
 	}
 }
 

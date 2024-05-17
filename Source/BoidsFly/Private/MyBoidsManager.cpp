@@ -2,10 +2,9 @@
 
 
 #include "MyBoidsManager.h"
+
+#include "MyBoid.h"
 #include "RenderGraphUtils.h"
-//#include "ShaderParameterUtils.h"
-//#include "RHIUtilities.h"
-//#include "DataDrivenShaderPlatformInfo.h"
 
 class FMyBoidComputeShader : public FGlobalShader
 {
@@ -60,6 +59,14 @@ void AMyBoidsManager::Tick(float DeltaTime)
 
 void AMyBoidsManager::ComputeBoid()
 {
+	for (auto Bird : BoidInfoSave.BoidRef)
+	{
+		if(Bird)
+		{
+			BoidInfoSave.BoidBase[Bird->BirdId].Position = Bird->GetActorLocation();
+			BoidInfoSave.BoidBase[Bird->BirdId].Velocity = Bird->GetCurVelocity();
+		}
+	}
 	if (BoidInfoSave.BoidBase.Num() >= 1)
 	{
 		ENQUEUE_RENDER_COMMAND(BoidCompute)(
@@ -74,14 +81,22 @@ void AMyBoidsManager::ComputeBoid()
 		});
 		FlushRenderingCommands();
 	}
+	for (auto Bird : BoidInfoSave.BoidRef)
+	{
+		if(Bird)
+		{
+			Bird->UpdateBird(true);
+		}
+	}
 }
 
 void AMyBoidsManager::InitBoidBase(int32 Num)
 {
 	BoidInfoSave.BoidBase.Empty();
-	for (int i=0; i<=Num; i++)
+	for (int i=0; i<Num; i++)
 	{
 		BoidInfoSave.BoidBase.Add(FMyBoidBase(FVector(), FVector()));
+		BoidInfoSave.BoidRef.Add(nullptr);
 	}
 }
 
