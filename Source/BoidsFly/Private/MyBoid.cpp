@@ -26,9 +26,16 @@ void AMyBoid::BeginPlay()
 void AMyBoid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if(BoidsManager && !BoidsManager->UseGPU)
+	if(BoidsManager)
 	{
-		UpdateBird(BoidsManager->UseGPU);
+		if(!BoidsManager->UseCS)
+		{
+			UpdateBird();
+		}
+		else
+		{
+			PrimaryActorTick.bCanEverTick = false;
+		}
 	}
 }
 
@@ -42,29 +49,29 @@ bool AMyBoid::GetIsCollosion()
 	return IsCollision;
 }
 
-void AMyBoid::UpdateBird(bool UseComputeShader)
+void AMyBoid::UpdateBird()
 {
 	CurAcceleration = FVector(0, 0, 0);
 
 	//聚合，同行，避让
-	if (GetRaysVectors())
-	{
-		for (FVector RayVector : RaysVectors)
-		{
-			FHitResult Hit;
-			FVector End = GetActorLocation() + RayVector * ViewRadius;
-			UKismetSystemLibrary::SphereTraceSingleForObjects(this, GetActorLocation(), End, 5.0f,
-				ObjectTypesWall, false, IgnoryActors, EDrawDebugTrace::None, Hit, true, FLinearColor::Green, FLinearColor::Red, 0.2f);
-			if (!Hit.bBlockingHit)
-			{
-				CurAcceleration += RayVector * CollosionWeight;
-				IsCollision = true;
-				GetWorldTimerManager().SetTimer(CollisionTimer, this, &AMyBoid::SetIsCollosionFalse, LeaveTime, false, LeaveTime);
-				//UE_LOG(LogTemp, Warning, TEXT("MeetCollosion"));
-				break;
-			}
-		}
-	}
+	 if (GetRaysVectors())
+	 {
+	 	for (FVector RayVector : RaysVectors)
+	 	{
+	 		FHitResult Hit;
+	 		FVector End = GetActorLocation() + RayVector * ViewRadius;
+	 		UKismetSystemLibrary::SphereTraceSingleForObjects(this, GetActorLocation(), End, 5.0f,
+	 			ObjectTypesWall, false, IgnoryActors, EDrawDebugTrace::None, Hit, true, FLinearColor::Green, FLinearColor::Red, 0.2f);
+	 		if (!Hit.bBlockingHit)
+	 		{
+	 			CurAcceleration += RayVector * CollosionWeight;
+	 			IsCollision = true;
+	 			GetWorldTimerManager().SetTimer(CollisionTimer, this, &AMyBoid::SetIsCollosionFalse, LeaveTime, false, LeaveTime);
+	 			//UE_LOG(LogTemp, Warning, TEXT("MeetCollosion"));
+	 			break;
+	 		}
+	 	}
+	 }
 
 	if (IsCollision)
 	{
@@ -81,7 +88,7 @@ void AMyBoid::UpdateBird(bool UseComputeShader)
 	}
 	else
 	{
-		if (!UseComputeShader)
+		if (!BoidsManager->UseCS)
 		{
 		
 			TArray<AMyBoid*> NearBoids;
@@ -159,17 +166,33 @@ void AMyBoid::UpdateBird(bool UseComputeShader)
 			if(BoidsManager->BoidInfoSave.BoidBase.IsValidIndex(BirdId))
 			{
 				int BoidNearNum = BoidsManager->BoidInfoSave.BoidBase[BirdId].BoidNearNum;
-				if(BoidNearNum <= BoidsManager->BoidInfoSave.BoidBase.Num())
+				FVector Center = FVector(BoidsManager->BoidInfoSave.BoidBase[BirdId].Center);
+				FVector Flow = FVector(BoidsManager->BoidInfoSave.BoidBase[BirdId].Flow);
+				FVector AovOut = FVector(BoidsManager->BoidInfoSave.BoidBase[BirdId].AovOut);
+				if (BoidNearNum > 0)
 				{
-					FVector Center = BoidsManager->BoidInfoSave.BoidBase[BirdId].Center;
-					FVector Flow = BoidsManager->BoidInfoSave.BoidBase[BirdId].Flow;
-					FVector AovOut = BoidsManager->BoidInfoSave.BoidBase[BirdId].AovOut;
-					if (BoidNearNum > 0 && !IsCollision)
+					FVector GoalDirection = BoidsManager->GlobalDirection;
+					if(BoidNearNum > BoidsManager->MaxGroupNum)
 					{
-						Aov = Aov * FreeWeight - AovOut;
-						CurAcceleration += (Center / BoidNearNum - GetActorLocation()) * CenterWeight;
-						CurAcceleration += (Flow + BoidsManager->GlobalDirection) / (float)BoidNearNum * FlowWeight;
-						CurAcceleration += Aov * AovWeight;
+						BoidsManager->MaxGroupNum = BoidNearNum;
+						BoidsManager->GroupTarget = Center / BoidNearNum;
+					}
+					
+					if(BoidNearNum <= MinGroupNum && BoidsManager->MaxGroupNum >= MinGroupNum + 5)
+					{
+						GoalDirection = BoidsManager->GroupTarget - GetActorLocation();
+					}
+					
+					Aov = Aov * FreeWeight - AovOut;
+					CurAcceleration += (Center / (float)BoidNearNum) * CenterWeight;
+					CurAcceleration += (Flow + GoalDirection) / (float)BoidNearNum * FlowWeight;
+					CurAcceleration += Aov * AovWeight;
+				}
+				else
+				{
+					if(BoidsManager->MaxGroupNum >= MinGroupNum + 5)
+					{
+						CurAcceleration += BoidsManager->GroupTarget - GetActorLocation();
 					}
 				}
 			}
@@ -191,7 +214,7 @@ void AMyBoid::AddSelfToManage(AMyBoidsManager* InBoidsManager)
 		BoidsManager = InBoidsManager;
 		BoidsManager->BoidInfoSave.AovRadius = AovRadius;
 		BoidsManager->BoidInfoSave.ViewRadius = ViewRadius;
-		BoidsManager->BoidInfoSave.BoidBase[BirdId] = FMyBoidBase(GetActorLocation(), CurVelocity);
+		BoidsManager->BoidInfoSave.BoidBase[BirdId] = FMyBoidBase(FVector3f(GetActorLocation()), FVector3f(CurVelocity));
 		BoidsManager->BoidInfoSave.BoidRef[BirdId] = this;
 	}
 }
@@ -205,13 +228,12 @@ bool AMyBoid::GetRaysVectors()
 	if (Hit.bBlockingHit)
 	{
 		RaysVectors.Empty();
-		int RaysNum = 50;
-		for (int i=1; i<RaysNum; i++)
+		for (int i=1; i <= CollosionRayNum; i++)
 		{
-			RaysVectors.Add((GetActorRightVector() - GetActorForwardVector()) * (float(i) / float(RaysNum)) + GetActorForwardVector());
-			RaysVectors.Add((GetActorRightVector() * -1.0f - GetActorForwardVector()) * (float(i) / float(RaysNum)) + GetActorForwardVector());
-			RaysVectors.Add((GetActorUpVector() - GetActorForwardVector()) * (float(i) / float(RaysNum)) + GetActorForwardVector());
-			RaysVectors.Add((GetActorUpVector() * -1.0f - GetActorForwardVector()) * (float(i) / float(RaysNum)) + GetActorForwardVector());
+			RaysVectors.Add((GetActorRightVector() - GetActorForwardVector()) * (float(i) / float(CollosionRayNum)) + GetActorForwardVector());
+			RaysVectors.Add((GetActorRightVector() * -1.0f - GetActorForwardVector()) * (float(i) / float(CollosionRayNum)) + GetActorForwardVector());
+			RaysVectors.Add((GetActorUpVector() - GetActorForwardVector()) * (float(i) / float(CollosionRayNum)) + GetActorForwardVector());
+			RaysVectors.Add((GetActorUpVector() * -1.0f - GetActorForwardVector()) * (float(i) / float(CollosionRayNum)) + GetActorForwardVector());
 		}
 		return true;
 	}

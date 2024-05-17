@@ -27,7 +27,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	FVector GetCurVelocity();
 	bool GetIsCollosion();
-	void UpdateBird(bool UseComputeShader);
+	void UpdateBird();
 	/*Value*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	int BirdId = 0;
@@ -51,6 +51,8 @@ public:
 	float FreeWeight = 0.9;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	float CollosionWeight = 0.1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
+	int32 CollosionRayNum = 12;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	float leaveWallWeight = 1.0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")

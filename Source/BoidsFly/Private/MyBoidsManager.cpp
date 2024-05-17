@@ -2,7 +2,6 @@
 
 
 #include "MyBoidsManager.h"
-
 #include "MyBoid.h"
 #include "RenderGraphUtils.h"
 
@@ -51,7 +50,7 @@ void AMyBoidsManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	MaxGroupNum--;
-	if (UseGPU)
+	if (UseCS && bIsReady)
 	{
 		ComputeBoid();
 	}
@@ -63,8 +62,8 @@ void AMyBoidsManager::ComputeBoid()
 	{
 		if(Bird)
 		{
-			BoidInfoSave.BoidBase[Bird->BirdId].Position = Bird->GetActorLocation();
-			BoidInfoSave.BoidBase[Bird->BirdId].Velocity = Bird->GetCurVelocity();
+			BoidInfoSave.BoidBase[Bird->BirdId].Position = FVector3f(Bird->GetActorLocation());
+			BoidInfoSave.BoidBase[Bird->BirdId].Velocity = FVector3f(Bird->GetCurVelocity());
 		}
 	}
 	if (BoidInfoSave.BoidBase.Num() >= 1)
@@ -85,7 +84,7 @@ void AMyBoidsManager::ComputeBoid()
 	{
 		if(Bird)
 		{
-			Bird->UpdateBird(true);
+			Bird->UpdateBird();
 		}
 	}
 }
@@ -95,7 +94,7 @@ void AMyBoidsManager::InitBoidBase(int32 Num)
 	BoidInfoSave.BoidBase.Empty();
 	for (int i=0; i<Num; i++)
 	{
-		BoidInfoSave.BoidBase.Add(FMyBoidBase(FVector(), FVector()));
+		BoidInfoSave.BoidBase.Add(FMyBoidBase(FVector3f(), FVector3f()));
 		BoidInfoSave.BoidRef.Add(nullptr);
 	}
 }

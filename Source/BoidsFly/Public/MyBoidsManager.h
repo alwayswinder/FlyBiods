@@ -11,16 +11,16 @@ class AMyBoid;
 
 struct FMyBoidBase
 {
-	FMyBoidBase(FVector Pos, FVector Vel) 
+	FMyBoidBase(FVector3f Pos, FVector3f Vel) 
 	{
 		Position = Pos;
 		Velocity = Vel;
 	}
-	FVector Position = FVector(0, 0, 0);
-	FVector Velocity = FVector(0, 0, 0);
-	FVector Center = FVector(0, 0, 0);
-	FVector Flow = FVector(0, 0, 0);
-	FVector AovOut = FVector(0, 0, 0);
+	FVector3f Position = FVector3f(0.f, 0.f, 0.f);
+	FVector3f Velocity = FVector3f(0, 0, 0);
+	FVector3f Center = FVector3f(0, 0, 0);
+	FVector3f Flow = FVector3f(0, 0, 0);
+	FVector3f AovOut = FVector3f(0, 0, 0);
 	int BoidNearNum = 0;
 };
 
@@ -53,9 +53,10 @@ public:
 	void GetComputeShaderResult(FRHICommandListImmediate& RHICmdList);
 
 	FMyBoidAttribute BoidInfoSave;
-	
+
+	//if use compute shader?
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boid")
-	bool UseGPU = true;
+	bool UseCS = true;
 	
 	UPROPERTY(BlueprintReadWrite, Category = "Boid")
 	FVector GlobalDirection;
@@ -67,9 +68,12 @@ public:
 	
 	int32 MaxGroupNum = 0;
 	FVector GroupTarget;
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Boid")
+	bool bIsReady = false;
+	
 
-
-private:private:
+private:
 	FBufferRHIRef BoidBaseBuffer;
 	FUnorderedAccessViewRHIRef BoidBaseRecordsUAV;
 };
