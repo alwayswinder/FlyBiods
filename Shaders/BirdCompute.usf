@@ -49,7 +49,7 @@ void MainCS(uint3 ThreadId : SV_DispatchThreadID)
     {
         BoidInfo[self].Acceleration = (Center / BoidNearNum - BoidInfo[self].Position) * 0.1;
         BoidInfo[self].Acceleration += (Flow + GlobalDir) / BoidNearNum * 1.2;
-        BoidInfo[self].Acceleration += Aov * 0.9;
+        BoidInfo[self].Acceleration += Aov * 4;
     }
     else
     {
