@@ -1,13 +1,14 @@
 #include "/Engine/Public/Platform.ush"
 
-Buffer<float3> Input;
-RWBuffer<float3> Output;
+Buffer<int> Input;
+RWBuffer<int> Output;
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MySimpleComputeShader(
     uint3 DispatchThreadId : SV_DispatchThreadID,
     uint GroupIndex : SV_GroupIndex )
 {
+    int self = DispatchThreadId.x;
     // Outputs one number
-    Output[0] = Input[0] * Input[1];
+    Output[self] = Input[self] + 1;
 }
