@@ -26,6 +26,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	FVector GetCurVelocity();
+	FVector GetCurAcc();
 	bool GetIsCollosion();
 	void UpdateBird();
 	/*Value*/

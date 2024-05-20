@@ -9,24 +9,23 @@
 
 class AMyBoid;
 
-struct FMyBoidBase
+struct FMyBoidInfo
 {
-	FMyBoidBase(FVector3f Pos, FVector3f Vel) 
+	FMyBoidInfo() {};
+
+	FMyBoidInfo(FVector3f Pos, FVector3f Vel) 
 	{
 		Position = Pos;
 		Velocity = Vel;
 	}
 	FVector3f Position = FVector3f(0.f, 0.f, 0.f);
 	FVector3f Velocity = FVector3f(0, 0, 0);
-	FVector3f Center = FVector3f(0, 0, 0);
-	FVector3f Flow = FVector3f(0, 0, 0);
-	FVector3f AovOut = FVector3f(0, 0, 0);
-	int BoidNearNum = 0;
+	FVector3f Acceleration = FVector3f(0, 0, 0);
 };
 
 struct FMyBoidAttribute
 {
-	TArray<FMyBoidBase> BoidBase;
+	TArray<FMyBoidInfo> BoidInfo;
 	float AovRadius = 20;
 	float ViewRadius = 100;
 	TArray<AMyBoid*> BoidRef;
@@ -53,7 +52,7 @@ public:
 	void GetComputeShaderResult(FRHICommandListImmediate& RHICmdList);
 
 	FMyBoidAttribute BoidInfoSave;
-
+	
 	//if use compute shader?
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boid")
 	bool UseCS = true;
@@ -74,6 +73,6 @@ public:
 	
 
 private:
-	FBufferRHIRef BoidBaseBuffer;
-	FUnorderedAccessViewRHIRef BoidBaseRecordsUAV;
+	FBufferRHIRef BoidInfoBuffer;
+	FUnorderedAccessViewRHIRef BoidInfoRecordsUAV;
 };

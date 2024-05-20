@@ -44,6 +44,11 @@ FVector AMyBoid::GetCurVelocity()
 	return CurVelocity;
 }
 
+FVector AMyBoid::GetCurAcc()
+{
+	return  CurAcceleration;
+}
+
 bool AMyBoid::GetIsCollosion()
 {
 	return IsCollision;
@@ -163,38 +168,9 @@ void AMyBoid::UpdateBird()
 		}
 		else
 		{
-			if(BoidsManager->BoidInfoSave.BoidBase.IsValidIndex(BirdId))
+			if(BoidsManager->BoidInfoSave.BoidInfo.IsValidIndex(BirdId))
 			{
-				int BoidNearNum = BoidsManager->BoidInfoSave.BoidBase[BirdId].BoidNearNum;
-				FVector Center = FVector(BoidsManager->BoidInfoSave.BoidBase[BirdId].Center);
-				FVector Flow = FVector(BoidsManager->BoidInfoSave.BoidBase[BirdId].Flow);
-				FVector AovOut = FVector(BoidsManager->BoidInfoSave.BoidBase[BirdId].AovOut);
-				if (BoidNearNum > 0)
-				{
-					FVector GoalDirection = BoidsManager->GlobalDirection;
-					if(BoidNearNum > BoidsManager->MaxGroupNum)
-					{
-						BoidsManager->MaxGroupNum = BoidNearNum;
-						BoidsManager->GroupTarget = Center / BoidNearNum;
-					}
-					
-					if(BoidNearNum <= MinGroupNum && BoidsManager->MaxGroupNum >= MinGroupNum + 5)
-					{
-						GoalDirection = BoidsManager->GroupTarget - GetActorLocation();
-					}
-					
-					Aov = Aov * FreeWeight - AovOut;
-					CurAcceleration += (Center / (float)BoidNearNum) * CenterWeight;
-					CurAcceleration += (Flow + GoalDirection) / (float)BoidNearNum * FlowWeight;
-					CurAcceleration += Aov * AovWeight;
-				}
-				else
-				{
-					if(BoidsManager->MaxGroupNum >= MinGroupNum + 5)
-					{
-						CurAcceleration += BoidsManager->GroupTarget - GetActorLocation();
-					}
-				}
+				CurAcceleration += FVector(BoidsManager->BoidInfoSave.BoidInfo[BirdId].Acceleration);
 			}
 		}
 	}
@@ -214,7 +190,7 @@ void AMyBoid::AddSelfToManage(AMyBoidsManager* InBoidsManager)
 		BoidsManager = InBoidsManager;
 		BoidsManager->BoidInfoSave.AovRadius = AovRadius;
 		BoidsManager->BoidInfoSave.ViewRadius = ViewRadius;
-		BoidsManager->BoidInfoSave.BoidBase[BirdId] = FMyBoidBase(FVector3f(GetActorLocation()), FVector3f(CurVelocity));
+		BoidsManager->BoidInfoSave.BoidInfo[BirdId] = FMyBoidInfo(FVector3f(GetActorLocation()), FVector3f(CurVelocity));
 		BoidsManager->BoidInfoSave.BoidRef[BirdId] = this;
 	}
 }

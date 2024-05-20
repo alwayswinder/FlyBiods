@@ -1,7 +1,7 @@
 #include "/Engine/Public/Platform.ush"
 
-Buffer<int> Input;
-RWBuffer<int> Output;
+Buffer<float3> Input;
+RWBuffer<float3> Output;
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MySimpleComputeShader(

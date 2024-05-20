@@ -1,48 +1,59 @@
 #include "/Engine/Public/Platform.ush"
 static const int threadGroupSize = 2;
 
-struct BoidBase
+struct BoidInfoBase
 {
     float3 Position;
     float3 Velocity;
-    float3 Center;
-    float3 Flow;
-    float3 AovOut;
-    int BoidNearNum;
+    float3 Acceleration;
 };
 
 int NumTotal;
 float AovRadius;
 float ViewRadius;
+float3 GlobalDir;
 
-RWStructuredBuffer<BoidBase> BoidBaseParam;
+RWStructuredBuffer<BoidInfoBase> BoidInfo;
 
 [numthreads(threadGroupSize, 1, 1)]
 void MainCS(uint3 ThreadId : SV_DispatchThreadID)
 {
     int self = ThreadId.x;
-    BoidBaseParam[self].Center = float3(0, 0, 0);
-    BoidBaseParam[self].AovOut = float3(0, 0, 0);
-    BoidBaseParam[self].Flow = float3(0, 0, 0);
-    BoidBaseParam[self].BoidNearNum = 0;
-
+    float3 Center = float3(0, 0, 0);
+    float3 Aov = float3(0, 0, 0);
+    float3 Flow = float3(0, 0, 0);
+    int BoidNearNum = 0;
+    BoidInfo[self].Acceleration = float3(0, 0, 0);
+    
     for(int i=0; i<NumTotal; i++)
     {
         if(i != self)
         {
-            float3 Offset = BoidBaseParam[i].Position -  BoidBaseParam[self].Position;
+            float3 Offset = BoidInfo[i].Position -  BoidInfo[self].Position;
             float DistenceSqrt = Offset.x*Offset.x + Offset.y*Offset.y + Offset.z*Offset.z;
             if(DistenceSqrt <= ViewRadius * ViewRadius)
             {
-                BoidBaseParam[self].Center += BoidBaseParam[i].Position;
-                BoidBaseParam[self].Flow += BoidBaseParam[i].Velocity;
-                BoidBaseParam[self].BoidNearNum += 1;
+                Center += BoidInfo[i].Position;
+                Flow += BoidInfo[i].Velocity;
+                BoidNearNum += 1;
                    
                 if(DistenceSqrt <= AovRadius * AovRadius)
                 {
-                     BoidBaseParam[self].AovOut += Offset/DistenceSqrt;
+                     Aov += Offset/DistenceSqrt;
                 }
             }
         }
+    }
+    
+    if(BoidNearNum > 0)
+    {
+        Aov = Aov * 0.9;
+        BoidInfo[self].Acceleration = (Center / BoidNearNum) * 0.1;
+        BoidInfo[self].Acceleration += (Flow + GlobalDir)/BoidNearNum * 1.2;
+        BoidInfo[self].Acceleration += Aov;
+    }
+    else
+    {
+        BoidInfo[self].Acceleration = GlobalDir;
     }
 }
