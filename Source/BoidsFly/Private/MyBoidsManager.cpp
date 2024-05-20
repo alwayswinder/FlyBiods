@@ -4,7 +4,6 @@
 #include "MyBoidsManager.h"
 #include "MyBoid.h"
 #include "RenderGraphUtils.h"
-#include "ShaderTest/Public/MySimpleComputeShader.h"
 
 class FMyBoidComputeShader : public FGlobalShader
 {
@@ -54,22 +53,7 @@ void AMyBoidsManager::Tick(float DeltaTime)
 	MaxGroupNum--;
 	if (UseCS && bIsReady)
 	{
-		//ComputeBoid();
-		FMySimpleComputeShaderDispatchParams Params(2, 1, 1);
- 
-		// Fill in your input parameters here
-		Params.Input[0] = 11;
-		Params.Input[1] = 3;
- 
-		// Executes the compute shader and calls the TFunction when complete.
-		FMySimpleComputeShaderInterface::Dispatch(Params, [](int* OutputVal) {
-			// OutputVal == 10
-			// Called when the results are back from the GPU.
-			UE_LOG(LogTemp,Warning,TEXT("Compute Result[0]: %d"), OutputVal[0]);
-			UE_LOG(LogTemp,Warning,TEXT("Compute Result[1]: %d"), OutputVal[1]);
-
-		});
-
+		ComputeBoid();
 	}
 }
 
@@ -148,7 +132,7 @@ void AMyBoidsManager::GetComputeShaderResult(FRHICommandListImmediate& RHICmdLis
 	FMyBoidInfo* Buffer = (FMyBoidInfo*)RHICmdList.LockBuffer(BoidInfoBuffer, 0, sizeof(FMyBoidInfo) * BoidInfoSave.BoidInfo.Num(), EResourceLockMode::RLM_ReadOnly);
 	for (int i = 0; i < BoidInfoSave.BoidInfo.Num(); i++)
 	{
-		BoidInfoSave.BoidInfo[i] = Buffer[i];
+		BoidInfoSave.BoidInfo[i].Acceleration = Buffer[i].Acceleration;
 	}
 	RHICmdList.UnlockBuffer(BoidInfoBuffer);
 }

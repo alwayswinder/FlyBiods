@@ -59,39 +59,39 @@ void AMyBoid::UpdateBird()
 	CurAcceleration = FVector(0, 0, 0);
 
 	//聚合，同行，避让
-	 if (GetRaysVectors())
-	 {
-	 	for (FVector RayVector : RaysVectors)
-	 	{
-	 		FHitResult Hit;
-	 		FVector End = GetActorLocation() + RayVector * ViewRadius;
-	 		UKismetSystemLibrary::SphereTraceSingleForObjects(this, GetActorLocation(), End, 5.0f,
-	 			ObjectTypesWall, false, IgnoryActors, EDrawDebugTrace::None, Hit, true, FLinearColor::Green, FLinearColor::Red, 0.2f);
-	 		if (!Hit.bBlockingHit)
-	 		{
-	 			CurAcceleration += RayVector * CollosionWeight;
-	 			IsCollision = true;
-	 			GetWorldTimerManager().SetTimer(CollisionTimer, this, &AMyBoid::SetIsCollosionFalse, LeaveTime, false, LeaveTime);
-	 			//UE_LOG(LogTemp, Warning, TEXT("MeetCollosion"));
-	 			break;
-	 		}
-	 	}
-	 }
-
-	if (IsCollision)
-	{
-		FHitResult Hit;
-		UKismetSystemLibrary::SphereTraceSingleForObjects(this, GetActorLocation(),
-			GetActorLocation()+FVector(0,0,1), AovRadius,
-			ObjectTypesWall, false, IgnoryActors, EDrawDebugTrace::None, Hit, true);
-		if (Hit.bBlockingHit)
-		{
-			FVector OffSetCollosion = GetActorLocation() - Hit.ImpactPoint;
-			CurAcceleration += OffSetCollosion * leaveWallWeight / (OffSetCollosion.Size() * OffSetCollosion.Size());
-			UE_LOG(LogTemp, Warning, TEXT("leaveWall"));
-		}
-	}
-	else
+	//  if (GetRaysVectors())
+	//  {
+	//  	for (FVector RayVector : RaysVectors)
+	//  	{
+	//  		FHitResult Hit;
+	//  		FVector End = GetActorLocation() + RayVector * ViewRadius;
+	//  		UKismetSystemLibrary::SphereTraceSingleForObjects(this, GetActorLocation(), End, 5.0f,
+	//  			ObjectTypesWall, false, IgnoryActors, EDrawDebugTrace::None, Hit, true, FLinearColor::Green, FLinearColor::Red, 0.2f);
+	//  		if (!Hit.bBlockingHit)
+	//  		{
+	//  			CurAcceleration += RayVector * CollosionWeight;
+	//  			IsCollision = true;
+	//  			GetWorldTimerManager().SetTimer(CollisionTimer, this, &AMyBoid::SetIsCollosionFalse, LeaveTime, false, LeaveTime);
+	//  			//UE_LOG(LogTemp, Warning, TEXT("MeetCollosion"));
+	//  			break;
+	//  		}
+	//  	}
+	//  }
+	//
+	// if (IsCollision)
+	// {
+	// 	FHitResult Hit;
+	// 	UKismetSystemLibrary::SphereTraceSingleForObjects(this, GetActorLocation(),
+	// 		GetActorLocation()+FVector(0,0,1), AovRadius,
+	// 		ObjectTypesWall, false, IgnoryActors, EDrawDebugTrace::None, Hit, true);
+	// 	if (Hit.bBlockingHit)
+	// 	{
+	// 		FVector OffSetCollosion = GetActorLocation() - Hit.ImpactPoint;
+	// 		CurAcceleration += OffSetCollosion * leaveWallWeight / (OffSetCollosion.Size() * OffSetCollosion.Size());
+	// 		UE_LOG(LogTemp, Warning, TEXT("leaveWall"));
+	// 	}
+	// }
+	//else
 	{
 		if (!BoidsManager->UseCS)
 		{
@@ -166,7 +166,7 @@ void AMyBoid::UpdateBird()
 				}
 			}
 		}
-		else
+		else//compute shader test
 		{
 			if(BoidsManager->BoidInfoSave.BoidInfo.IsValidIndex(BirdId))
 			{
