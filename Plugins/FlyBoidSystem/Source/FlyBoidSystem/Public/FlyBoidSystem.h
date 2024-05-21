@@ -5,12 +5,11 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-
-class FMyBoidModule : public IModuleInterface
+class FFlyBoidSystemModule : public IModuleInterface
 {
 public:
 
+	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 };
-

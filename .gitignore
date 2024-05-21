@@ -5,3 +5,5 @@
 /.vs/
 /.idea/
 BoidsFly.sln
+Plugins/FlyBoidSystem/Binaries/
+Plugins/FlyBoidSystem/Intermediate/
