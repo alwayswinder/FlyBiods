@@ -1,3 +1,4 @@
+// Copyright 2023-2024 LinFengZi. All Rights Reserved.
 #include "/Engine/Public/Platform.ush"
 static const int threadGroupSize = 2;
 
