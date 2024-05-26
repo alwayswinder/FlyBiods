@@ -1,10 +1,11 @@
 ﻿// Copyright 2023-2024 LinFengZi. All Rights Reserved.
 
 #include "MyBoidsManager.h"
-
+#include "GlobalShader.h"
 #include "DataDrivenShaderPlatformInfo.h"
 #include "MyBoid.h"
 #include "RenderGraphUtils.h"
+#include "Containers/DynamicRHIResourceArray.h"
 
 class FMyBoidComputeShader : public FGlobalShader
 {

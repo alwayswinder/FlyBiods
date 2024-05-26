@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Runtime/Engine/Classes/GameFramework/Actor.h"
+#include "RHICommandList.h"
 #include "MyBoidsManager.generated.h"
 
 

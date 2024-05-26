@@ -1,8 +1,9 @@
 // Copyright 2023-2024 LinFengZi. All Rights Reserved.
 
 #include "FlyBoidSystem.h"
-
+#include "Misc/Paths.h"
 #include "Interfaces/IPluginManager.h"
+#include "ShaderCore.h"
 
 #define LOCTEXT_NAMESPACE "FFlyBoidSystemModule"
 

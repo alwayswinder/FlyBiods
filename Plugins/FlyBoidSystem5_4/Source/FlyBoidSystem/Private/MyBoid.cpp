@@ -2,8 +2,9 @@
 
 #include "MyBoid.h"
 #include "MyBoidsManager.h"
+#include "Engine/HitResult.h"
 #include "Kismet\KismetSystemLibrary.h"
-
+#include "TimerManager.h"
 
 // Sets default values
 AMyBoid::AMyBoid()
